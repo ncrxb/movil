@@ -23,17 +23,63 @@ class HomePage extends StatelessWidget {
       },
       child: Scaffold(
       appBar: AppBar(),
-      body: Consumer<HomeController>(
-        builder:(_, controller, __) => GoogleMap(
+      body: Selector<HomeController, bool>(
+        selector: (_,controller) => controller.loading,
+        builder: (context, loading, loadingWidget){
+        
+        if(loading){
+          return loadingWidget!;
+        }
+        
+        return Consumer<HomeController>(
+        builder:(_, controller, gpsMessageWidget) {
+
+          if(!controller.gpsEnabled){
+            return gpsMessageWidget!;
+          }
+        
+        final initialPosition = LatLng(
+          controller.initialPosition!.latitude, 
+          controller.initialPosition!.longitude);
+
+          return GoogleMap(
               markers: controller.markers,
               onMapCreated: controller.onMapCreated,
-              initialCameraPosition: controller.initialCameraPosition,
+              initialCameraPosition: CameraPosition(target: initialPosition, zoom: 14),
               myLocationButtonEnabled: true,
+              myLocationEnabled: true,
               compassEnabled: false,
               onTap: controller.onTap,
+              );
+           },
 
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Para utilizar nuestra app necesita habilidar el GPS",
+                  textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: (){
+                     final controller = context.read<HomeController>();
+                    controller.turnOnGPS();
+                    }, 
+                    child: const  Text("Turn on GPS"),
+                    ),               
+                ],
+              ),
+            ),
 
-              ),)
+              );
+        },
+             child: const Center(
+            child: CircularProgressIndicator(),
+            )
+
+        
+      ),
       ),
     );
   }
